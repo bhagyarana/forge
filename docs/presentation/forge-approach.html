@@ -1,0 +1,627 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>FORGE — Approach &amp; Design Rationale</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Big+Shoulders+Display:wght@600;700;800;900&family=IBM+Plex+Sans:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg:#eef1ea; --surface:#ffffff; --surface-2:#e4e8dd;
+    --line:#d3d7c8; --line-2:#b3b8a3;
+    --text:#171910; --text-2:#4a4f40; --text-3:#767c68;
+    --accent:#c1440e; --accent-2:#e8720f; --accent-wash:#c1440e12;
+    --good:#1f7a52; --warn:#9c6a08; --bad:#a92a1d;
+    --good-wash:#1f7a5212; --warn-wash:#9c6a0812; --bad-wash:#a92a1d12;
+    --display:"Big Shoulders Display",ui-sans-serif,system-ui,sans-serif;
+    --body:"IBM Plex Sans",ui-sans-serif,system-ui,"Segoe UI",sans-serif;
+    --mono:"IBM Plex Mono",ui-monospace,SFMono-Regular,Menlo,monospace;
+  }
+  *{box-sizing:border-box;}
+  html,body{margin:0; background:#cfd3c5;}
+  body{font-family:var(--body); color:var(--text); font-size:16px;}
+  h1,h2,h3{font-family:var(--display); font-weight:800; margin:0; text-wrap:balance;}
+  p{margin:0;}
+  code,.mono{font-family:var(--mono);}
+  ul{margin:0; padding:0; list-style:none;}
+
+  .deck{ display:flex; flex-direction:column; align-items:center; gap:28px; padding:28px 0 60px; }
+  .slide{
+    width:1280px; height:720px; background:var(--surface); position:relative;
+    padding:56px 74px 46px; display:flex; flex-direction:column; overflow:hidden;
+    box-shadow:0 1px 3px rgba(0,0,0,.15), 0 12px 32px rgba(0,0,0,.12);
+    flex-shrink:0;
+  }
+  .eyebrow{font-family:var(--mono); font-size:12px; font-weight:600; letter-spacing:1.6px; text-transform:uppercase; color:var(--accent);}
+  .num{position:absolute; top:56px; right:74px; font-family:var(--mono); font-size:12px; color:var(--text-3);}
+  .foot{position:absolute; left:74px; right:74px; bottom:24px; display:flex; justify-content:space-between; align-items:center; font-family:var(--mono); font-size:10.5px; color:var(--text-3); border-top:1px solid var(--line); padding-top:10px;}
+  .foot b{color:var(--text-2); font-weight:600;}
+  .rule-sm{height:4px; width:64px; border-radius:3px; background:linear-gradient(90deg,var(--accent),var(--accent-2)); margin:14px 0 20px;}
+
+  /* ---- title slide ---- */
+  .s-title{justify-content:center; align-items:flex-start; background:linear-gradient(160deg,#171910 0%, #2a2416 55%, #171910 100%); color:#f2ede0;}
+  .s-title .word{font-family:var(--display); font-weight:900; font-size:96px; letter-spacing:.5px; color:#f2ede0;}
+  .s-title .word em{font-style:normal; color:var(--accent-2);}
+  .s-title .tag{font-size:22px; color:#cfc6b0; margin-top:6px;}
+  .s-title .rule-sm{background:linear-gradient(90deg,var(--accent-2),#ffd08a); width:120px; height:6px;}
+  .s-title .sub{margin-top:22px; font-size:16px; color:#a89f8a; max-width:60ch; line-height:1.6;}
+  .s-title .meta{position:absolute; bottom:40px; left:74px; right:74px; display:flex; justify-content:space-between; font-family:var(--mono); font-size:12px; color:#8d8371; border-top:1px solid #3a3323; padding-top:14px;}
+
+  /* ---- generic heading block ---- */
+  .head{margin-bottom:8px;}
+  .head h2{font-size:38px; letter-spacing:-.3px;}
+  .head .dek{margin-top:8px; font-size:15.5px; color:var(--text-2); max-width:78ch; line-height:1.5;}
+
+  .body{flex:1; min-height:0; display:flex; flex-direction:column; justify-content:center;}
+
+  /* ---- bullet list ---- */
+  .points{display:flex; flex-direction:column; gap:16px;}
+  .points li{display:grid; grid-template-columns:28px 1fr; gap:14px; align-items:start;}
+  .points li .mk{font-family:var(--mono); color:var(--accent); font-weight:700; font-size:14px; padding-top:2px;}
+  .points li b{display:block; font-size:16.5px; font-weight:700; margin-bottom:3px;}
+  .points li span{font-size:14.5px; color:var(--text-2); line-height:1.5;}
+
+  /* ---- agenda ---- */
+  .agenda{display:grid; grid-template-columns:1fr 1fr; gap:10px 40px;}
+  .agenda li{display:grid; grid-template-columns:36px 1fr; gap:12px; align-items:baseline; padding:10px 0; border-bottom:1px solid var(--line);}
+  .agenda li .n{font-family:var(--display); font-weight:800; font-size:20px; color:var(--line-2);}
+  .agenda li b{font-size:15.5px; font-weight:600;}
+
+  /* ---- pillar cards ---- */
+  .pillars{display:grid; grid-template-columns:repeat(3,1fr); gap:20px; flex:1;}
+  .pillar{border:1px solid var(--line); border-radius:14px; padding:24px 22px; display:flex; flex-direction:column; gap:10px; background:var(--surface-2);}
+  .pillar .pn{font-family:var(--display); font-weight:900; font-size:15px; color:var(--accent); letter-spacing:1px;}
+  .pillar h3{font-size:21px; line-height:1.15;}
+  .pillar p{font-size:14px; color:var(--text-2); line-height:1.55;}
+  .pillar .quote{margin-top:auto; font-family:var(--mono); font-size:12px; color:var(--text-3); border-top:1px solid var(--line); padding-top:10px;}
+
+  /* ---- pipeline diagram ---- */
+  .pipeline{display:flex; flex-direction:column; gap:14px; flex:1; justify-content:center;}
+  .prow{display:flex; align-items:center; gap:10px;}
+  .prow.reverse{flex-direction:row-reverse;}
+  .pbox{flex:1; border:1.5px solid var(--line-2); border-radius:10px; padding:12px 14px; background:var(--surface-2); position:relative;}
+  .pbox .pn{font-family:var(--mono); font-size:10px; color:var(--text-3); letter-spacing:.5px;}
+  .pbox .pt{font-family:var(--display); font-weight:800; font-size:16px; margin-top:2px;}
+  .pbox .pd{font-size:11.5px; color:var(--text-2); margin-top:3px; line-height:1.3;}
+  .parrow{font-size:22px; color:var(--accent); flex-shrink:0;}
+  .pdrop{font-size:22px; color:var(--accent); text-align:center; margin:-4px 0;}
+
+  /* ---- stage deep-dive layout ---- */
+  .stage-wrap{display:grid; grid-template-columns:1.3fr 1fr; gap:36px; flex:1; min-height:0;}
+  .stage-tag{display:inline-block; font-family:var(--mono); font-size:12px; font-weight:700; letter-spacing:.5px; color:var(--accent); background:var(--accent-wash); border-radius:100px; padding:4px 12px; margin-bottom:14px;}
+  .stage-desc{font-size:15px; color:var(--text-2); line-height:1.6; margin-bottom:16px;}
+  .stage-panel{border:1px solid var(--line); border-radius:14px; padding:20px 22px; background:var(--surface-2); display:flex; flex-direction:column; gap:10px;}
+  .stage-panel h4{font-family:var(--mono); font-size:11px; letter-spacing:.8px; text-transform:uppercase; color:var(--text-3); font-weight:600;}
+  .kv-list{display:flex; flex-direction:column; gap:8px;}
+  .kv-list .row{display:flex; justify-content:space-between; gap:10px; font-size:13px; border-bottom:1px dashed var(--line); padding-bottom:7px;}
+  .kv-list .row b{font-family:var(--mono); color:var(--text);}
+  .kv-list .row span{color:var(--text-2);}
+
+  /* ---- weighted formula bars ---- */
+  .wbar-row{display:grid; grid-template-columns:120px 1fr 56px; align-items:center; gap:10px; font-size:12.5px;}
+  .wbar-row .lbl{color:var(--text-2);}
+  .wtrack{height:9px; border-radius:5px; background:var(--surface); border:1px solid var(--line);}
+  .wfill{height:100%; border-radius:4px; background:var(--accent);}
+  .wbar-row .pct{font-family:var(--mono); text-align:right; color:var(--text);}
+
+  /* ---- pills ---- */
+  .pill{display:inline-block; font-family:var(--mono); font-size:11.5px; font-weight:700; padding:4px 11px; border-radius:100px; margin:2px 4px 2px 0;}
+  .pill.good{color:var(--good); background:var(--good-wash);}
+  .pill.warn{color:var(--warn); background:var(--warn-wash);}
+  .pill.bad{color:var(--bad); background:var(--bad-wash);}
+  .pill.plain{color:var(--text-2); background:var(--surface-2); border:1px solid var(--line);}
+
+  /* ---- veto cards ---- */
+  .vetoes{display:grid; grid-template-columns:repeat(5,1fr); gap:12px;}
+  .veto{border:1px solid var(--line); border-radius:12px; padding:14px 12px; background:var(--surface-2);}
+  .veto .vid{font-family:var(--display); font-weight:900; font-size:22px; color:var(--accent);}
+  .veto .vt{font-size:12.5px; font-weight:700; margin:6px 0 5px;}
+  .veto .vd{font-size:11px; color:var(--text-2); line-height:1.4;}
+
+  /* ---- comparison table ---- */
+  table.cmp{width:100%; border-collapse:collapse; font-size:13px;}
+  table.cmp th{text-align:left; font-family:var(--mono); font-size:10.5px; text-transform:uppercase; letter-spacing:.4px; color:var(--text-3); padding:0 12px 10px 0; border-bottom:1.5px solid var(--line-2);}
+  table.cmp td{padding:11px 12px 11px 0; border-bottom:1px solid var(--line); vertical-align:top; color:var(--text-2);}
+  table.cmp td.hl{color:var(--text); font-weight:600;}
+  table.cmp tr:last-child td{border-bottom:none;}
+  table.cmp .colhead{font-weight:700; color:var(--text); font-size:13.5px;}
+
+  /* ---- quote / sentence slide ---- */
+  .s-quote{justify-content:center; align-items:center; text-align:center; background:var(--surface-2);}
+  .s-quote blockquote{font-family:var(--display); font-weight:700; font-size:34px; line-height:1.35; max-width:900px; color:var(--text); margin:0;}
+  .s-quote .attrib{margin-top:26px; font-family:var(--mono); font-size:13px; color:var(--text-3);}
+  .s-quote .qmark{font-size:64px; color:var(--accent); font-family:var(--display); line-height:.5; margin-bottom:8px;}
+
+  /* ---- status grid ---- */
+  .status-grid{display:grid; grid-template-columns:repeat(4,1fr); gap:14px; flex:1;}
+  .sphase{border:1px solid var(--line); border-radius:12px; padding:16px 16px; background:var(--surface-2); display:flex; flex-direction:column; gap:8px;}
+  .sphase .sp-name{font-family:var(--display); font-weight:800; font-size:16px;}
+  .sphase .sp-state{align-self:flex-start; font-family:var(--mono); font-size:10.5px; font-weight:700; padding:3px 9px; border-radius:100px;}
+  .sphase .sp-note{font-size:11.5px; color:var(--text-2); line-height:1.45;}
+
+  /* ---- closing ---- */
+  .s-close{justify-content:center; background:linear-gradient(160deg,#171910 0%, #2a2416 55%, #171910 100%); color:#f2ede0;}
+  .s-close h2{color:#f2ede0; font-size:44px;}
+  .s-close p{color:#cfc6b0; font-size:16px; margin-top:14px; max-width:70ch; line-height:1.6;}
+  .s-close .term{margin-top:28px; background:#0f0e0b; border:1px solid #3a3323; border-radius:10px; padding:16px 20px; font-family:var(--mono); font-size:14px; color:#e9e4d8; display:inline-block;}
+  .s-close .term .p{color:#7fd99a;}
+
+  @media print{
+    html,body{background:#fff;}
+    .deck{ gap:0; padding:0; }
+    .slide{ box-shadow:none; page-break-after:always; }
+  }
+</style>
+</head>
+<body>
+<div class="deck">
+
+  <!-- 01 — TITLE -->
+  <section class="slide s-title">
+    <span class="word">FOR<em>G</em>E</span>
+    <div class="tag">Autonomous Test Orchestration Agent</div>
+    <div class="rule-sm"></div>
+    <p class="sub">Approach &amp; design rationale — why the pipeline is built the way it is, what every stage decides, and the trade-offs made on purpose along the way.</p>
+    <div class="meta">
+      <span>Engineering deep-dive · internal</span>
+      <span>v1 · Ph0–Ph7 snapshot</span>
+    </div>
+  </section>
+
+  <!-- 02 — AGENDA -->
+  <section class="slide">
+    <span class="eyebrow">Agenda</span>
+    <span class="num">02 / 20</span>
+    <div class="head" style="margin-top:14px;"><h2>What this deck covers</h2></div>
+    <div class="rule-sm"></div>
+    <div class="body">
+      <ul class="agenda">
+        <li><span class="n">01</span><b>The problem with testing web apps today</b></li>
+        <li><span class="n">02</span><b>Our thesis — three pillars</b></li>
+        <li><span class="n">03</span><b>The eight-stage pipeline, end to end</b></li>
+        <li><span class="n">04</span><b>Explore &amp; Design/Psychology Critic</b></li>
+        <li><span class="n">05</span><b>Plan, Critic, and the re-plan loop</b></li>
+        <li><span class="n">06</span><b>Generate, Run, and Triage</b></li>
+        <li><span class="n">07</span><b>Heal — the scorer and the five vetoes</b></li>
+        <li><span class="n">08</span><b>Two decisions we defend on paper (ADR-001, ADR-017)</b></li>
+        <li><span class="n">09</span><b>The Report and the live dashboard</b></li>
+        <li><span class="n">10</span><b>Why this is better, and where we're honest it isn't finished</b></li>
+      </ul>
+    </div>
+    <div class="foot"><span><b>FORGE</b> — Approach &amp; Design Rationale</span><span>Autonomous Test Orchestration Agent</span></div>
+  </section>
+
+  <!-- 03 — THE PROBLEM -->
+  <section class="slide">
+    <span class="eyebrow">The problem</span>
+    <span class="num">03 / 20</span>
+    <div class="head" style="margin-top:14px;"><h2>Every existing approach fails the same way</h2>
+      <p class="dek">Manual QA doesn't scale with release cadence. Scripted E2E suites rot the moment a label changes. And the newest fix — "AI self-healing" — introduces a worse failure mode than the one it solves.</p>
+    </div>
+    <div class="rule-sm"></div>
+    <div class="body">
+      <ul class="points">
+        <li><span class="mk">01</span><div><b>Manual testing doesn't scale.</b><span>A human re-clicking through the app before every release is slow, inconsistent, and the first thing cut under deadline pressure.</span></div></li>
+        <li><span class="mk">02</span><div><b>Scripted suites are brittle by construction.</b><span>A locator written against today's DOM breaks the moment a class name or button label moves — regardless of whether the feature underneath still works.</span></div></li>
+        <li><span class="mk">03</span><div><b>Naive "self-healing" hides the exact failures that matter most.</b><span>A healer built to just find the closest matching element can't tell "the button moved" from "the button now deletes the order." Commercial healers ship this today.</span></div></li>
+        <li><span class="mk">04</span><div><b>The two failures look identical at the moment they happen.</b><span><code>0 elements matched</code> is the symptom either way. Every downstream decision depends on telling them apart — before touching anything.</span></div></li>
+      </ul>
+    </div>
+    <div class="foot"><span><b>FORGE</b> — Approach &amp; Design Rationale</span><span>The Problem</span></div>
+  </section>
+
+  <!-- 04 — THESIS -->
+  <section class="slide">
+    <span class="eyebrow">Our thesis</span>
+    <span class="num">04 / 20</span>
+    <div class="head" style="margin-top:14px;"><h2>Heal what's safe. Refuse what isn't. Show the arithmetic.</h2></div>
+    <div class="rule-sm"></div>
+    <div class="pillars">
+      <div class="pillar">
+        <span class="pn">PILLAR 01</span>
+        <h3>Evidence before arithmetic before verdict</h3>
+        <p>No stage jumps straight to a decision. A failure is diagnosed, then scored, then gated — every step leaves the evidence that produced it in the report.</p>
+        <div class="quote">"0.71 said heal; V2 said no; the veto wins."</div>
+      </div>
+      <div class="pillar">
+        <span class="pn">PILLAR 02</span>
+        <h3>Deterministic-first, model-optional</h3>
+        <p>Every verdict that can be computed with a formula and a fixed rule is. The model is consulted for judgment, never for permission — it can lower a verdict, never raise one.</p>
+        <div class="quote">"Pulling the API key changes what the report says, not what the pipeline does."</div>
+      </div>
+      <div class="pillar">
+        <span class="pn">PILLAR 03</span>
+        <h3>Refuse loudly, never fix quietly</h3>
+        <p>A false "fixed" costs a production incident and the credibility of every future green build. A false "needs review" costs one engineer a minute. The pipeline is built around that asymmetry.</p>
+        <div class="quote">"A suite that heals through real bugs stops carrying information."</div>
+      </div>
+    </div>
+    <div class="foot"><span><b>FORGE</b> — Approach &amp; Design Rationale</span><span>Thesis</span></div>
+  </section>
+
+  <!-- 05 — ARCHITECTURE / PIPELINE -->
+  <section class="slide">
+    <span class="eyebrow">Architecture</span>
+    <span class="num">05 / 20</span>
+    <div class="head" style="margin-top:14px;"><h2>One pass, eight stages, in a fixed order</h2>
+      <p class="dek">A URL goes in on the left. A scored, evidenced verdict comes out on the right. Every arrow below is a real, named handoff in the code — not a metaphor.</p>
+    </div>
+    <div class="pipeline">
+      <div class="prow">
+        <div class="pbox"><div class="pn">01</div><div class="pt">Explore</div><div class="pd">Crawl the live site, build a capability map</div></div>
+        <span class="parrow">→</span>
+        <div class="pbox"><div class="pn">02</div><div class="pt">Design Critic</div><div class="pd">Review layout &amp; wording, non-gating</div></div>
+        <span class="parrow">→</span>
+        <div class="pbox"><div class="pn">03</div><div class="pt">Plan + Critic</div><div class="pd">Draft, score, re-plan up to twice</div></div>
+        <span class="parrow">→</span>
+        <div class="pbox"><div class="pn">04</div><div class="pt">Generate</div><div class="pd">Compile the plan to real Playwright code</div></div>
+      </div>
+      <div class="pdrop">↓</div>
+      <div class="prow reverse">
+        <div class="pbox"><div class="pn">08</div><div class="pt">Report</div><div class="pd">One score, recomputable by hand</div></div>
+        <span class="parrow">←</span>
+        <div class="pbox"><div class="pn">07</div><div class="pt">Heal</div><div class="pd">Score, veto, patch, or refuse</div></div>
+        <span class="parrow">←</span>
+        <div class="pbox"><div class="pn">06</div><div class="pt">Triage</div><div class="pd">Diagnose the failure into 1 of 6 causes</div></div>
+        <span class="parrow">←</span>
+        <div class="pbox"><div class="pn">05</div><div class="pt">Run</div><div class="pd">Execute against the real, live app</div></div>
+      </div>
+    </div>
+    <div class="foot"><span><b>FORGE</b> — Approach &amp; Design Rationale</span><span>Architecture</span></div>
+  </section>
+
+  <!-- 06 — DECISION: deterministic-first -->
+  <section class="slide">
+    <span class="eyebrow">Decision · applies to every stage</span>
+    <span class="num">06 / 20</span>
+    <div class="head" style="margin-top:14px;"><h2>Deterministic-first, model-optional</h2>
+      <p class="dek">Only two call sites in the whole pipeline ever touch a model — and neither one can block, unblock, or override a verdict arithmetic already reached.</p>
+    </div>
+    <div class="rule-sm"></div>
+    <div class="body">
+      <ul class="points">
+        <li><span class="mk">→</span><div><b>The model tells us what we missed. It does not get to decide whether we ship.</b><span>A model-authored coverage gap is clamped to <code>MAJOR</code> in code before it's even merged — only eight deterministic rules can mint or clear a <code>BLOCKER</code>. See ADR-017.</span></div></li>
+        <li><span class="mk">→</span><div><b>The same asymmetry governs healing.</b><span>The healer's adjudication call can only ever <em>lower</em> a verdict, never raise one — a model cannot unblock a fired veto. See ADR-001.</span></div></li>
+        <li><span class="mk">→</span><div><b>This is a testable guarantee, not a policy.</b><span>Every golden case runs with <code>ANTHROPIC_API_KEY</code> unset and produces the identical verdict, five times in a row.</span></div></li>
+        <li><span class="mk">→</span><div><b>Why it matters to a reviewer.</b><span>A gate that only holds when the network is up is not a gate. Determinism is what turns "the model decided" into "arithmetic decided, and the model's advice is on the record too."</span></div></li>
+      </ul>
+    </div>
+    <div class="foot"><span><b>FORGE</b> — Approach &amp; Design Rationale</span><span>Design Principle</span></div>
+  </section>
+
+  <!-- 07 — STAGE: EXPLORE -->
+  <section class="slide">
+    <span class="eyebrow">Stage 01</span>
+    <span class="num">07 / 20</span>
+    <div class="stage-wrap">
+      <div>
+        <div class="head"><h2>Explore</h2></div>
+        <span class="stage-tag">EXPLORE</span>
+        <p class="stage-desc">FORGE opens the real, live URL in a real browser and clicks through it the way a first-time visitor would — every page, button, link and form — logging in first if credentials are given. Nothing is tested yet; this stage only builds a map of what exists.</p>
+        <ul class="points">
+          <li><span class="mk">→</span><div><b>Perception is structural, not visual.</b><span>Pages are read from the accessibility tree — roles and accessible names — not pixels, so the map survives a re-skin.</span></div></li>
+          <li><span class="mk">→</span><div><b>Duplicate pages collapse to one state.</b><span><code>/product/:sku</code> variants are recognised as the same screen via a state signature, so the crawl doesn't explode on a catalogue.</span></div></li>
+          <li><span class="mk">→</span><div><b>The crawl always terminates.</b><span>Four halt reasons are all reachable and guaranteed — a state budget, a time budget, or the frontier genuinely running out of new links.</span></div></li>
+        </ul>
+      </div>
+      <div class="stage-panel">
+        <h4>What comes out</h4>
+        <div class="kv-list">
+          <div class="row"><span>States</span><b>deduplicated screens</b></div>
+          <div class="row"><span>Transitions</span><b>ways to move between them</b></div>
+          <div class="row"><span>Affordances</span><b>every clickable / fillable control</b></div>
+          <div class="row"><span>Authenticated</span><b>true / false</b></div>
+          <div class="row"><span>Halt reason</span><b>why the crawl stopped</b></div>
+        </div>
+      </div>
+    </div>
+    <div class="foot"><span><b>FORGE</b> — Approach &amp; Design Rationale</span><span>Stage Deep-Dive</span></div>
+  </section>
+
+  <!-- 08 — STAGE: DESIGN CRITIC -->
+  <section class="slide">
+    <span class="eyebrow">Stage 02</span>
+    <span class="num">08 / 20</span>
+    <div class="stage-wrap">
+      <div>
+        <div class="head"><h2>Design &amp; Psychology Critic</h2></div>
+        <span class="stage-tag">DESIGN</span>
+        <p class="stage-desc">A second, independent review runs on the same screens the Explorer already captured — this time asking whether the page is actually usable, not just functional. It is deliberately kept separate from the Coverage Critic (ADR-018): it can inform the report, but it can never gate the pipeline.</p>
+        <ul class="points">
+          <li><span class="mk">→</span><div><b>Grounded in real research, not vibes.</b><span>Checks map to growth.design's CLEAR framework, Fitts's Law, Miller's Law, and WCAG AA contrast — every finding cites the principle it's based on.</span></div></li>
+          <li><span class="mk">→</span><div><b>Evidence-layer discipline.</b><span>A finding must originate from structural, semantic, or geometric evidence. A screenshot only corroborates — it never mints a finding on its own.</span></div></li>
+          <li><span class="mk">→</span><div><b>Additive, non-gating, by design.</b><span>Neither the pipeline's exit code nor its pass/fail outcome changes because of anything this stage finds.</span></div></li>
+        </ul>
+      </div>
+      <div class="stage-panel">
+        <h4>Delight Score — 5 components</h4>
+        <div class="kv-list">
+          <div class="row"><span>Copywriting</span><b>CLEAR "C"</b></div>
+          <div class="row"><span>Layout</span><b>heading hierarchy, above-the-fold</b></div>
+          <div class="row"><span>Emphasis</span><b>Fitts's Law, contrast</b></div>
+          <div class="row"><span>Accessibility</span><b>WCAG AA, labels</b></div>
+          <div class="row"><span>Reward*</span><b>*placeholder — needs before/after capture</b></div>
+        </div>
+      </div>
+    </div>
+    <div class="foot"><span><b>FORGE</b> — Approach &amp; Design Rationale</span><span>Stage Deep-Dive</span></div>
+  </section>
+
+  <!-- 09 — STAGE: PLAN + CRITIC -->
+  <section class="slide">
+    <span class="eyebrow">Stage 03</span>
+    <span class="num">09 / 20</span>
+    <div class="stage-wrap">
+      <div>
+        <div class="head"><h2>Plan &amp; the Coverage Critic</h2></div>
+        <span class="stage-tag">CRITIC</span>
+        <p class="stage-desc">A test plan is drafted from the capability map, then scored against everything the Explorer found. Below the floor, it's sent back — at most twice — before FORGE proceeds anyway and names exactly what's still missing.</p>
+        <div class="wbar-row"><span class="lbl">Affordances</span><div class="wtrack"><div class="wfill" style="width:70%"></div></div><span class="pct">× .35</span></div>
+        <div class="wbar-row"><span class="lbl">Transitions</span><div class="wtrack"><div class="wfill" style="width:50%"></div></div><span class="pct">× .25</span></div>
+        <div class="wbar-row"><span class="lbl">States reached</span><div class="wtrack"><div class="wfill" style="width:40%"></div></div><span class="pct">× .20</span></div>
+        <div class="wbar-row"><span class="lbl">Class breadth</span><div class="wtrack"><div class="wfill" style="width:40%"></div></div><span class="pct">× .20</span></div>
+      </div>
+      <div class="stage-panel">
+        <h4>The re-plan loop</h4>
+        <div class="kv-list">
+          <div class="row"><span>Floor</span><b>0.70</b></div>
+          <div class="row"><span>Max rounds</span><b>2 (TG-6 cap)</b></div>
+        </div>
+        <div style="margin-top:6px;">
+          <span class="pill good">PASS</span> ≥ 0.70<br><br>
+          <span class="pill warn">REPLAN</span> below floor, rounds left<br><br>
+          <span class="pill bad">ACCEPT_RISK</span> below floor, cap reached
+        </div>
+      </div>
+    </div>
+    <div class="foot"><span><b>FORGE</b> — Approach &amp; Design Rationale</span><span>Stage Deep-Dive</span></div>
+  </section>
+
+  <!-- 10 — STAGE: GENERATE + RUN -->
+  <section class="slide">
+    <span class="eyebrow">Stages 04–05</span>
+    <span class="num">10 / 20</span>
+    <div class="head" style="margin-top:14px;"><h2>Generate, then Run — for real</h2>
+      <p class="dek">An accepted plan is compiled into actual Playwright code, then executed against the real, live application. Nothing here is mocked or replayed.</p>
+    </div>
+    <div class="rule-sm"></div>
+    <div class="stage-wrap" style="align-items:stretch;">
+      <div>
+        <span class="stage-tag">GENERATE</span>
+        <p class="stage-desc" style="margin-bottom:10px;">The compiler turns each scenario's steps into the same clicks, typing and checks a human tester would perform by hand — written down so they run again, unattended, exactly the same way every time.</p>
+        <ul class="points">
+          <li><span class="mk">→</span><div><b>Locators favor role + accessible name.</b><span>The most robust identity a control has, before falling back to anything more brittle.</span></div></li>
+        </ul>
+      </div>
+      <div>
+        <span class="stage-tag">RUN</span>
+        <p class="stage-desc" style="margin-bottom:10px;">Each scenario gets its own real browser context and executes against production or staging — not a fixture, not a snapshot.</p>
+        <ul class="points">
+          <li><span class="mk">→</span><div><b>If the button isn't there today, the test finds out today.</b><span>A pass means the flow works right now, not that it worked when the test was written.</span></div></li>
+        </ul>
+      </div>
+    </div>
+    <div class="foot"><span><b>FORGE</b> — Approach &amp; Design Rationale</span><span>Stage Deep-Dive</span></div>
+  </section>
+
+  <!-- 11 — STAGE: TRIAGE -->
+  <section class="slide">
+    <span class="eyebrow">Stage 06</span>
+    <span class="num">11 / 20</span>
+    <div class="head" style="margin-top:14px;"><h2>Triage — diagnose before you touch anything</h2>
+      <p class="dek">A failure is classified into exactly one of six causes before any repair is even considered. A moved button and a genuinely broken feature must never be handled the same way.</p>
+    </div>
+    <div class="rule-sm"></div>
+    <div class="body">
+      <div class="vetoes" style="grid-template-columns:repeat(3,1fr); grid-auto-rows:1fr; gap:14px;">
+        <div class="veto"><div class="vt" style="color:var(--warn)">LOCATOR_BREAK</div><div class="vd">The address moved; an identical control still exists elsewhere. A healing candidate.</div></div>
+        <div class="veto"><div class="vt" style="color:var(--bad)">PRODUCT_BUG</div><div class="vd">The thing expected genuinely isn't there. Reported, never patched.</div></div>
+        <div class="veto"><div class="vt" style="color:var(--bad)">CONTENT_DRIFT</div><div class="vd">Real copy or price changed — a claim to update by hand, not to auto-heal.</div></div>
+        <div class="veto"><div class="vt">FLAKY</div><div class="vd">Evidence points to timing/non-determinism, not a real change.</div></div>
+        <div class="veto"><div class="vt">ENVIRONMENT</div><div class="vd">The target itself is unreachable or degraded — not a test problem at all.</div></div>
+        <div class="veto"><div class="vt" style="color:var(--text-3)">UNKNOWN</div><div class="vd">No row matched confidently. Escalated rather than guessed.</div></div>
+      </div>
+    </div>
+    <div class="foot"><span><b>FORGE</b> — Approach &amp; Design Rationale</span><span>Stage Deep-Dive</span></div>
+  </section>
+
+  <!-- 12 — STAGE: HEAL, the scorer -->
+  <section class="slide">
+    <span class="eyebrow">Stage 07 · part 1</span>
+    <span class="num">12 / 20</span>
+    <div class="head" style="margin-top:14px;"><h2>Heal — six signals produce one score</h2>
+      <p class="dek">A candidate replacement is scored on six independent signals, combined by weight, then capped at a ceiling that depends on how it was found — the ceiling is a ceiling, never a bonus.</p>
+    </div>
+    <div class="stage-wrap">
+      <div>
+        <div class="wbar-row"><span class="lbl">Semantic</span><div class="wtrack"><div class="wfill" style="width:60%"></div></div><span class="pct">× .30</span></div>
+        <div class="wbar-row"><span class="lbl">Role match</span><div class="wtrack"><div class="wfill" style="width:40%"></div></div><span class="pct">× .20</span></div>
+        <div class="wbar-row"><span class="lbl">Visible text</span><div class="wtrack"><div class="wfill" style="width:30%"></div></div><span class="pct">× .15</span></div>
+        <div class="wbar-row"><span class="lbl">DOM context</span><div class="wtrack"><div class="wfill" style="width:30%"></div></div><span class="pct">× .15</span></div>
+        <div class="wbar-row"><span class="lbl">Geometry</span><div class="wtrack"><div class="wfill" style="width:20%"></div></div><span class="pct">× .10</span></div>
+        <div class="wbar-row"><span class="lbl">History</span><div class="wtrack"><div class="wfill" style="width:20%"></div></div><span class="pct">× .10</span></div>
+        <p style="font-size:13px; color:var(--text-2); margin-top:16px; line-height:1.55;"><code>score = min(raw, baseTrust[strategy])</code> — a locator found by role+name can reach 1.00; one found only by XPath is capped at 0.20, however well it otherwise scores.</p>
+      </div>
+      <div class="stage-panel">
+        <h4>Only one candidate shape is eligible</h4>
+        <div class="kv-list">
+          <div class="row"><span>Resolved count</span><b>must equal exactly 1</b></div>
+          <div class="row"><span>Filtered</span><b>before scoring, not after</b></div>
+          <div class="row"><span>Ranked pool</span><b>top 5, no duplicates</b></div>
+        </div>
+        <p style="font-size:12.5px; color:var(--text-2); margin-top:6px;">A locator that resolves to zero or to many elements never reaches the scorer at all — ambiguity is a filter, not a penalty.</p>
+      </div>
+    </div>
+    <div class="foot"><span><b>FORGE</b> — Approach &amp; Design Rationale</span><span>Stage Deep-Dive</span></div>
+  </section>
+
+  <!-- 13 — STAGE: HEAL, vetoes + gates -->
+  <section class="slide">
+    <span class="eyebrow">Stage 07 · part 2</span>
+    <span class="num">13 / 20</span>
+    <div class="head" style="margin-top:14px;"><h2>Heal — five vetoes decide before the score does</h2>
+      <p class="dek">Vetoes run first. Any one of them fires and the score is never even consulted — a veto is a claim about a category, not a very low number.</p>
+    </div>
+    <div class="vetoes">
+      <div class="veto"><div class="vid">V1</div><div class="vt">Assertion target</div><div class="vd">A failed truth-claim step is never eligible for a patch.</div></div>
+      <div class="veto"><div class="vid">V2</div><div class="vt">Destructive verb</div><div class="vd">Never heal a safe control into "delete", "cancel", "refund"…</div></div>
+      <div class="veto"><div class="vid">V3</div><div class="vt">Numeric drift</div><div class="vd">Expected vs. actual differ only in a number or currency.</div></div>
+      <div class="veto"><div class="vid">V4</div><div class="vt">Ambiguity</div><div class="vd">Top two candidates within 0.05 of each other.</div></div>
+      <div class="veto"><div class="vid">V5</div><div class="vt">Runtime regression</div><div class="vd">A new console error or 5xx appeared since baseline.</div></div>
+    </div>
+    <div style="margin-top:22px; display:flex; gap:14px; align-items:center; font-size:13.5px;">
+      <span class="pill bad">Veto fired</span><span style="color:var(--text-2)">→ BLOCKED, unconditionally</span>
+      <span style="width:1px; height:18px; background:var(--line); display:inline-block;"></span>
+      <span class="pill good">score ≥ 0.85, margin &gt; 0.05</span><span style="color:var(--text-2)">→ AUTO_HEAL</span>
+      <span style="width:1px; height:18px; background:var(--line); display:inline-block;"></span>
+      <span class="pill warn">score ≥ 0.65</span><span style="color:var(--text-2)">→ ESCALATE_FOR_REVIEW</span>
+    </div>
+    <div class="foot"><span><b>FORGE</b> — Approach &amp; Design Rationale</span><span>Stage Deep-Dive</span></div>
+  </section>
+
+  <!-- 14 — DECISION: ADR-001 -->
+  <section class="slide">
+    <span class="eyebrow">Decision · ADR-001</span>
+    <span class="num">14 / 20</span>
+    <div class="head" style="margin-top:14px;"><h2>Why vetoes, not just a higher confidence threshold?</h2>
+      <p class="dek">A single scalar threshold cannot express "no score is high enough here" — and two real failure shapes need exactly that sentence.</p>
+    </div>
+    <table class="cmp">
+      <tr><th>Criterion</th><th class="colhead">A — threshold only</th><th class="colhead">B — vetoes first (chosen)</th></tr>
+      <tr><td>Catches <i>"Place order"</i> → <i>"Delete order"</i></td><td>No — scores ≈0.71, high on every signal</td><td class="hl">Yes — V2 fires, score never consulted</td></tr>
+      <tr><td>Catches ₹999 → ₹9,999</td><td>No — edit distance 1, scores ≈0.99</td><td class="hl">Yes — V3 fires</td></tr>
+      <tr><td>Cost of buying more safety</td><td>Also blocks legitimate heals</td><td class="hl">Blocks only the named class</td></tr>
+      <tr><td>Explainable on stage</td><td>"0.91 ≥ 0.85"</td><td class="hl">"0.71 said heal; V2 said no — veto wins"</td></tr>
+      <tr><td>Needs a labelled corpus to defend</td><td>Yes — a threshold is a claim about a distribution</td><td class="hl">No — a veto is a claim about a category</td></tr>
+    </table>
+    <p style="margin-top:20px; font-size:13.5px; color:var(--text-2); max-width:90ch;">The deciding argument is cost asymmetry: a false block costs one engineer a minute against a full evidence pack; a false heal costs a production incident <i>and</i> the credibility of every green result the suite has ever produced.</p>
+    <div class="foot"><span><b>FORGE</b> — Approach &amp; Design Rationale</span><span>Decision Record</span></div>
+  </section>
+
+  <!-- 15 — DECISION: ADR-017 -->
+  <section class="slide">
+    <span class="eyebrow">Decision · ADR-017</span>
+    <span class="num">15 / 20</span>
+    <div class="head" style="margin-top:14px;"><h2>Why can't the model's judgment ever block the pipeline?</h2>
+      <p class="dek">The obvious worry is a model blocking too much. The dangerous case is the opposite one: a model clearing a blocker nobody should have cleared.</p>
+    </div>
+    <table class="cmp">
+      <tr><th>Criterion</th><th class="colhead">A — model gaps can block</th><th class="colhead">B — only arithmetic blocks (chosen)</th></tr>
+      <tr><td>Same plan, same verdict, five times</td><td>No</td><td class="hl">Yes</td></tr>
+      <tr><td>Behaviour with no API key</td><td>The gate silently weakens</td><td class="hl">Identical</td></tr>
+      <tr><td>Can a persuasive model stall a lap forever?</td><td>Yes</td><td class="hl">No</td></tr>
+      <tr><td>Can a persuasive model wave a bad plan through?</td><td>Yes</td><td class="hl">No — it can't clear a blocker either</td></tr>
+      <tr><td>Explains in one sentence</td><td>"The model decides"</td><td class="hl">"Arithmetic decides; the model advises — both are recorded"</td></tr>
+    </table>
+    <p style="margin-top:20px; font-size:13.5px; color:var(--text-2); max-width:90ch;">Model-authored gaps are clamped to <code>MAJOR</code> in code before merge. A genuinely critical semantic gap still reaches the report — it just can't silently stop, or silently pass, the lap on its own authority.</p>
+    <div class="foot"><span><b>FORGE</b> — Approach &amp; Design Rationale</span><span>Decision Record</span></div>
+  </section>
+
+  <!-- 16 — STAGE: REPORT -->
+  <section class="slide">
+    <span class="eyebrow">Stage 08</span>
+    <span class="num">16 / 20</span>
+    <div class="stage-wrap">
+      <div>
+        <div class="head"><h2>Report — every number, recomputable by hand</h2></div>
+        <span class="stage-tag">REPORT</span>
+        <p class="stage-desc">The robustness score is a weighted sum of four components, every one of them a plain ratio over stored results — nothing in it is a claim to take on faith.</p>
+        <div class="wbar-row"><span class="lbl">Coverage</span><div class="wtrack"><div class="wfill" style="width:80%"></div></div><span class="pct">× .40</span></div>
+        <div class="wbar-row"><span class="lbl">Pass rate</span><div class="wtrack"><div class="wfill" style="width:60%"></div></div><span class="pct">× .30</span></div>
+        <div class="wbar-row"><span class="lbl">Heal recovery</span><div class="wtrack"><div class="wfill" style="width:40%"></div></div><span class="pct">× .20</span></div>
+        <div class="wbar-row"><span class="lbl">Refusal integrity</span><div class="wtrack"><div class="wfill" style="width:20%"></div></div><span class="pct">× .10</span></div>
+      </div>
+      <div class="stage-panel">
+        <h4>Also in the report</h4>
+        <div class="kv-list">
+          <div class="row"><span>Critic rounds</span><b>every score, every verdict</b></div>
+          <div class="row"><span>Healer actions</span><b>healed / blocked / escalated, with evidence</b></div>
+          <div class="row"><span>Residual gaps</span><b>named explicitly, never hidden in the score</b></div>
+          <div class="row"><span>Delight Score</span><b>alongside, never merged in</b></div>
+        </div>
+      </div>
+    </div>
+    <div class="foot"><span><b>FORGE</b> — Approach &amp; Design Rationale</span><span>Stage Deep-Dive</span></div>
+  </section>
+
+  <!-- 17 — DASHBOARD -->
+  <section class="slide">
+    <span class="eyebrow">Interface</span>
+    <span class="num">17 / 20</span>
+    <div class="head" style="margin-top:14px;"><h2>Watch it happen — <code style="font-size:.85em;">forge ui</code></h2>
+      <p class="dek">The same pipeline, streamed live over server-sent events, to a dashboard built for someone who has never seen a test suite before.</p>
+    </div>
+    <div class="rule-sm"></div>
+    <div class="body">
+      <ul class="points">
+        <li><span class="mk">→</span><div><b>One input: a URL, and credentials if the app needs them.</b><span>Nothing to configure — press Run and every stage above starts streaming.</span></div></li>
+        <li><span class="mk">→</span><div><b>Plain-English narration, technical detail on demand.</b><span>Every timeline card leads with what's happening and why, in plain language — the raw score, locator, or veto id is one click away, never deleted.</span></div></li>
+        <li><span class="mk">→</span><div><b>Live screenshots, not a log file.</b><span>Every page FORGE visits streams to the screen as it's captured — the same evidence the Design Critic is scoring, visible in real time.</span></div></li>
+        <li><span class="mk">→</span><div><b>A continuous progress indicator.</b><span>The dashboard always shows which of the eight stages is currently running, through to "Generating your report" — never a silent gap.</span></div></li>
+      </ul>
+    </div>
+    <div class="foot"><span><b>FORGE</b> — Approach &amp; Design Rationale</span><span>Interface</span></div>
+  </section>
+
+  <!-- 18 — WHY BETTER -->
+  <section class="slide">
+    <span class="eyebrow">Comparison</span>
+    <span class="num">18 / 20</span>
+    <div class="head" style="margin-top:14px;"><h2>Where this sits against the alternatives</h2></div>
+    <table class="cmp">
+      <tr><th>Approach</th><th>Scales with releases</th><th>Tells "moved" from "broken"</th><th>Auditable without trusting a model</th></tr>
+      <tr><td class="colhead">Manual QA</td><td>No</td><td class="hl">Yes, if the person notices</td><td>Yes, but nothing is recorded</td></tr>
+      <tr><td class="colhead">Scripted E2E (as-is)</td><td>Yes</td><td>No — every drift is just a failure</td><td>Yes, but brittle</td></tr>
+      <tr><td class="colhead">Similarity-only auto-heal</td><td>Yes</td><td class="bad" style="color:var(--bad); font-weight:600;">No — heals through real bugs</td><td>No — one scalar, opaque</td></tr>
+      <tr><td class="colhead" style="color:var(--accent);">FORGE</td><td class="hl">Yes</td><td class="hl">Yes — six-cause triage before any repair</td><td class="hl">Yes — arithmetic holds with the model off</td></tr>
+    </table>
+    <p style="margin-top:22px; font-size:14px; color:var(--text-2); max-width:90ch;">The differentiator isn't "it uses AI." It's that the parts which must never be probabilistic — the floor, the vetoes, the blocker gate — aren't. The model's judgment shows up everywhere it adds value, and nowhere it could quietly cost trust.</p>
+    <div class="foot"><span><b>FORGE</b> — Approach &amp; Design Rationale</span><span>Comparison</span></div>
+  </section>
+
+  <!-- 19 — HONEST STATUS -->
+  <section class="slide">
+    <span class="eyebrow">Where we actually are</span>
+    <span class="num">19 / 20</span>
+    <div class="head" style="margin-top:14px;"><h2>Built, demo-scoped, and deferred — named honestly</h2>
+      <p class="dek">The same discipline the pipeline applies to a web app's coverage, applied to this project's own status: gaps are named, never hidden inside a green checkmark.</p>
+    </div>
+    <div class="status-grid">
+      <div class="sphase">
+        <span class="sp-name">Ph0–Ph2</span>
+        <span class="sp-state" style="background:var(--good-wash); color:var(--good);">Built &amp; tested</span>
+        <span class="sp-note">Workspace guardrails, schemas/FSM/store, perception &amp; the Explorer — confirmed live against real targets.</span>
+      </div>
+      <div class="sphase">
+        <span class="sp-name">Ph3–Ph6</span>
+        <span class="sp-state" style="background:var(--warn-wash); color:var(--warn);">Demo fast-track</span>
+        <span class="sp-note">One real, deterministic-only vertical slice shipped end to end — narrower than the full spec (e.g. one locator rung, four-term coverage score), honestly labelled as such in-repo.</span>
+      </div>
+      <div class="sphase">
+        <span class="sp-name">Ph5 (Triage/Heal)</span>
+        <span class="sp-state" style="background:var(--good-wash); color:var(--good);">Real pass shipped</span>
+        <span class="sp-note">The full ten-row triage table, six-signal scorer, and all five vetoes — 111 tests green — superseding the earlier fast-track stub.</span>
+      </div>
+      <div class="sphase">
+        <span class="sp-name">Ph7 (Design Critic)</span>
+        <span class="sp-state" style="background:var(--good-wash); color:var(--good);">Built &amp; tested</span>
+        <span class="sp-note">Ten checks shipped end to end; seven more (DC-01/02/05/07–10) and masked pixel diffing deliberately deferred, not attempted.</span>
+      </div>
+    </div>
+    <div class="foot"><span><b>FORGE</b> — Approach &amp; Design Rationale</span><span>Status</span></div>
+  </section>
+
+  <!-- 20 — CLOSING -->
+  <section class="slide s-close">
+    <h2>Arithmetic decides. The model advises.<br>Both are on the record.</h2>
+    <p>That one sentence is the whole design — applied to the Critic's floor, the Healer's vetoes, and every verdict in between. Nothing in this pipeline asks you to trust a claim it can't also show you the evidence for.</p>
+    <div class="term"><span class="p">$</span> pnpm forge ui</div>
+    <div class="meta" style="position:absolute;">
+    </div>
+  </section>
+
+</div>
+</body>
+</html>
