@@ -1,0 +1,43 @@
+# fixtures/perception/conduit-editor.snapshot.yaml — 16 §3.6, Ph2.1
+# Conduit's sign-in gate: identity field carries no name/autocomplete at all, only a
+# placeholder — the third structural variant, forcing the identity heuristic's
+# placeholder fallback rather than name or autocomplete matching.
+url: "https://conduit.example.com/login"
+title: "Sign in · Conduit"
+raw:
+  domBytes: 38912
+root:
+  role: document
+  children:
+    - role: navigation
+      children:
+        - role: link
+          name: "conduit"
+          ref: e1
+        - role: link
+          name: "Sign up"
+          ref: e2
+    - role: main
+      children:
+        - role: heading
+          name: "Sign in"
+          level: 1
+        - role: link
+          name: "Need an account?"
+          ref: e3
+        - role: form
+          name: "Sign in"
+          children:
+            - role: textbox
+              name: null
+              ref: e4
+              placeholder: "Email"
+            - role: textbox
+              name: null
+              ref: e5
+              inputType: password
+              placeholder: "Password"
+            - role: button
+              name: "Sign in"
+              ref: e6
+              inputType: submit

@@ -2,6 +2,7 @@ import { fileURLToPath } from "node:url";
 import { dirname, join } from "node:path";
 import { runDoctor } from "./commands/doctor.js";
 import { runEval } from "./commands/eval.js";
+import { runExplore } from "./commands/explore.js";
 import { runReset } from "./commands/reset.js";
 
 export const FORGE_CLI_VERSION = "0.0.0";
@@ -45,9 +46,23 @@ async function main(): Promise<number> {
     case "reset":
       return runReset(repoRoot);
 
+    case "explore": {
+      const url = rest.find((a) => !a.startsWith("--"));
+      if (!url) {
+        console.error("forge explore: a URL is required — forge explore <url>");
+        return 1;
+      }
+      return runExplore(repoRoot, {
+        url,
+        ...(typeof flags.username === "string" ? { username: flags.username } : {}),
+        ...(typeof flags.password === "string" ? { password: flags.password } : {}),
+        ...(typeof flags.intent === "string" ? { intent: flags.intent } : {}),
+      });
+    }
+
     default:
       console.error(
-        `forge: unknown or not-yet-implemented command '${command ?? ""}'. Available in Ph1: doctor, eval, reset.`,
+        `forge: unknown or not-yet-implemented command '${command ?? ""}'. Available: doctor, eval, reset, explore.`,
       );
       return 1;
   }

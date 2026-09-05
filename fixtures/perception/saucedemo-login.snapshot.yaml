@@ -1,0 +1,41 @@
+# fixtures/perception/saucedemo-login.snapshot.yaml — 16 §3.6, Ph2.1
+# saucedemo.com's whole surface is a login screen: an *unnamed* <form> (no aria-label),
+# so the scope match comes from the form element itself rather than a landmark —
+# structurally distinct from aperture-checkout's named "Sign in" form.
+url: "https://www.saucedemo.com/"
+title: "Swag Labs"
+raw:
+  domBytes: 45056
+root:
+  role: document
+  children:
+    - role: main
+      children:
+        - role: img
+          name: "Swag Labs"
+        - role: form
+          children:
+            - role: textbox
+              name: "Username"
+              ref: e1
+              attrName: user-name
+              attrId: user-name
+              autocomplete: username
+              placeholder: "Username"
+            - role: textbox
+              name: "Password"
+              ref: e2
+              attrName: password
+              attrId: password
+              inputType: password
+              autocomplete: current-password
+              placeholder: "Password"
+            - role: button
+              name: "Login"
+              ref: e3
+              inputType: submit
+    - role: contentinfo
+      children:
+        - role: link
+          name: "Terms of Service"
+          ref: e4

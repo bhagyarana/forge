@@ -13,9 +13,11 @@
     "dev": "tsc -b --watch"
   },
   "dependencies": {
+    "@forge/agent-explorer": "workspace:*",
     "@forge/core": "workspace:*",
     "@forge/evals": "workspace:*",
-    "@forge/orchestrator": "workspace:*"
+    "@forge/orchestrator": "workspace:*",
+    "playwright": "^1.49.1"
   },
   "devDependencies": {
     "@types/node": "^22.10.2"

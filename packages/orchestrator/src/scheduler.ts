@@ -142,7 +142,9 @@ async function continueSession(
     // ── PRIORITISING ──────────────────────────────────────────────────────
     assertSessionTransition("EXPLORING", "PRIORITISING");
     session = updateSessionStatus(db, sessionId, "PRIORITISING");
-    const backlogNames = rankCapabilities(map.capabilities).map((c) => c.name); // TG-3
+    const backlogNames = rankCapabilities(map.capabilities, session.input.intent).map(
+      (c) => c.name,
+    ); // TG-3
     appendEvent(db, clock, {
       sessionId,
       lapId: null,
@@ -162,7 +164,7 @@ async function continueSession(
   }
 
   const affordances = listAffordancesForSession(db, sessionId);
-  const backlog = rankCapabilities(map.capabilities);
+  const backlog = rankCapabilities(map.capabilities, session.input.intent);
   const existingLaps = listLaps(db, sessionId);
   const bankedCapabilityIds = new Set(
     existingLaps.filter((l) => l.status === "BANKED").map((l) => l.capabilityId),

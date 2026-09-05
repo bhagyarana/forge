@@ -1,0 +1,56 @@
+# fixtures/perception/aperture-checkout.snapshot.yaml — 16 §3.6, Ph2.1
+# The "sign in to continue" step of Aperture's guest checkout: a login form wrapped in
+# a named <form>, plus surrounding commerce chrome (cart badge, footer) so the same
+# fixture also exercises affordance extraction and digit-masking in the signature.
+url: "https://aperture.example.com/checkout/sign-in"
+title: "Sign in · Checkout"
+raw:
+  domBytes: 61440
+root:
+  role: document
+  children:
+    - role: banner
+      children:
+        - role: link
+          name: "Aperture"
+          ref: e1
+        - role: navigation
+          children:
+            - role: link
+              name: "Cart (2)"
+              ref: e2
+    - role: main
+      children:
+        - role: heading
+          name: "Sign in to checkout"
+          level: 1
+        - role: form
+          name: "Sign in"
+          children:
+            - role: textbox
+              name: "Email address"
+              ref: e3
+              attrName: email
+              attrId: email
+              autocomplete: email
+              placeholder: "you@example.com"
+            - role: textbox
+              name: "Password"
+              ref: e4
+              attrName: password
+              attrId: password
+              inputType: password
+              autocomplete: current-password
+              placeholder: "Password"
+            - role: button
+              name: "Continue"
+              ref: e5
+              inputType: submit
+        - role: link
+          name: "Continue as guest"
+          ref: e6
+    - role: contentinfo
+      children:
+        - role: link
+          name: "Terms"
+          ref: e7

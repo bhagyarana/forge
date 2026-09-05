@@ -159,46 +159,49 @@ That is a deliberate trade and it is the user's to reverse. If the demo clock wi
 **Read first.** [08 · Perception Layer](docs/02-architecture/08-perception-layer.md) · [09 · Exploration & Prioritisation](docs/03-algorithms/09-exploration-and-prioritisation.md)
 **Owns.** `FR-101`…`FR-110` · `TG-2` `TG-3` · `I-17` `I-20` · model call site 1
 
+> **Scope note, this pass.** `apps/sut` (the reference-shop target the live-tier golden cases run against) does not exist yet and was agreed out of scope for this pass. Everything below that does not depend on it is built and tested; items that do are left unchecked with a pointer to [00 §4.2](docs/00-work-plan.md) rather than falsely marked done.
+
 ### Ph2.1 — Record the perception fixtures first
 
-- [ ] **Build** `fixtures/perception/{aperture-checkout,saucedemo-login,conduit-editor}.snapshot.yaml` ([16 §3.6](docs/04-build/16-agent-test-suite.md)) — three structurally different pages, captured before any detector exists
-- [ ] **Verify** each is under the snapshot budget in [08 §7](docs/02-architecture/08-perception-layer.md)
+- [x] **Build** `fixtures/perception/{aperture-checkout,saucedemo-login,conduit-editor}.snapshot.yaml` ([16 §3.6](docs/04-build/16-agent-test-suite.md)) — three structurally different pages, captured before any detector exists
+- [x] **Verify** each is under the snapshot budget in [08 §7](docs/02-architecture/08-perception-layer.md)
 
 ### Ph2.2 — Perception, pure
 
-- [ ] **Test** `detectLoginForm()` reaches confidence `1.00` on all three fixtures with **zero configuration** — that is `FR-101`'s acceptance criterion and it runs in milliseconds
-- [ ] **Test** `stateSignature()` collapses the `/product/:sku` variants to one state ([16 §5, EC-02](docs/04-build/16-agent-test-suite.md)) · `I-20` every destructive affordance is also `observedNotExercised`
-- [ ] **Build** `packages/perception` — snapshot, signature, affordances, deny-list ([08 §2](docs/02-architecture/08-perception-layer.md)–[§4](docs/02-architecture/08-perception-layer.md))
-- [ ] **Verify** unit tier, no browser, under the 5 s budget
+- [x] **Test** `detectLoginForm()` reaches confidence `1.00` on all three fixtures with **zero configuration** — that is `FR-101`'s acceptance criterion and it runs in milliseconds
+- [x] **Test** `stateSignature()` collapses the `/product/:sku` variants to one state ([16 §5, EC-02](docs/04-build/16-agent-test-suite.md)) · `I-20` every destructive affordance is also `observedNotExercised`
+- [x] **Build** `packages/perception` — snapshot, signature, affordances, deny-list ([08 §2](docs/02-architecture/08-perception-layer.md)–[§4](docs/02-architecture/08-perception-layer.md))
+- [x] **Verify** unit tier, no browser, under the 5 s budget
 
 ### Ph2.3 — Authentication
 
-- [ ] **Test** `storageState` is written once and reused; zero re-logins during a crawl (`FR-102`)
-- [ ] **Build** [09 §2](docs/03-algorithms/09-exploration-and-prioritisation.md). `.auth/` is a secret — never evidence, never an event payload
-- [ ] **Verify** the credential grep finds nothing in `artifacts/` (`I-16`, again, now with a real login)
+- [ ] **Test** `storageState` is written once and reused; zero re-logins during a crawl (`FR-102`) — not written; nothing persists `storageState` yet (see below)
+- [ ] **Build** [09 §2](docs/03-algorithms/09-exploration-and-prioritisation.md). `.auth/` is a secret — never evidence, never an event payload — `detectLoginForm()`/`authOutcome()`/`authenticate()` are built and tested (confidence ladder, the four-outcome table, the one retry), but nothing yet writes `.auth/state.json` or reuses it across navigations
+- [ ] **Verify** the credential grep finds nothing in `artifacts/` (`I-16`, again, now with a real login) — moot until `storageState` is written anywhere
 
 ### Ph2.4 — The frontier
 
-- [ ] **Test** all four `haltReason` values are reachable, and termination is guaranteed for each (`FR-107`)
-- [ ] **Build** the frontier loop, deduplication, the origin scope (`FR-109`), the politeness throttle ([09 §3](docs/03-algorithms/09-exploration-and-prioritisation.md), [§4](docs/03-algorithms/09-exploration-and-prioritisation.md))
-- [ ] **Verify** limits are counters in a `for` loop, not prompt instructions ([06 §2.2](docs/02-architecture/06-agent-contracts.md))
+- [x] **Test** all four `haltReason` values are reachable, and termination is guaranteed for each (`FR-107`)
+- [ ] **Build** the frontier loop, deduplication, the origin scope (`FR-109`), the politeness throttle ([09 §3](docs/03-algorithms/09-exploration-and-prioritisation.md), [§4](docs/03-algorithms/09-exploration-and-prioritisation.md)) — the loop, dedup and origin scope are built and tested in `packages/agents/explorer/src/frontier.ts`; the politeness throttle between navigations is not implemented
+- [x] **Verify** limits are counters in a `for` loop, not prompt instructions ([06 §2.2](docs/02-architecture/06-agent-contracts.md))
 
 ### Ph2.5 — Clustering and ranking
 
-- [ ] **Test** `I-17` — `rank()` returns an identical order across **five** invocations on one stored map
-- [ ] **Test** `TG-2`'s degrade: zero capabilities yields one synthetic capability, never `ERROR`
-- [ ] **Build** nav-stripping clustering ([09 §5](docs/03-algorithms/09-exploration-and-prioritisation.md)) and six-factor risk ranking ([09 §6](docs/03-algorithms/09-exploration-and-prioritisation.md))
-- [ ] **Verify** the `EC-01` backlog order: Checkout · Sign-in · Account Orders · Cart · Browse
+- [x] **Test** `I-17` — `rank()` returns an identical order across **five** invocations on one stored map
+- [x] **Test** `TG-2`'s degrade: zero capabilities yields one synthetic capability, never `ERROR`
+- [x] **Build** nav-stripping clustering ([09 §5](docs/03-algorithms/09-exploration-and-prioritisation.md)) and six-factor risk ranking ([09 §6](docs/03-algorithms/09-exploration-and-prioritisation.md)) — `packages/core/src/prioritise.ts` (moved from the illustrative `packages/orchestrator/src/prioritise.ts` path; see that file's header comment for why), wired into `orchestrator/guards.ts`'s `rankCapabilities`
+- [x] **Verify** the `EC-01` backlog order: Checkout · Sign-in · Account Orders · Cart · Browse — reproduced as a unit test against [09 §6.3](docs/03-algorithms/09-exploration-and-prioritisation.md)'s worked factors (not the literal `EC-01` fixture, which needs `apps/sut`); see [00 §4.2](docs/00-work-plan.md) for a numeric discrepancy found in that worked example
 
 ### Ph2.6 — The agent loop, last
 
-- [ ] **Build** `packages/agents/explorer` on the `Ph1.4` harness — the model chooses _what to visit next_, nothing else ([06 §4.1](docs/02-architecture/06-agent-contracts.md))
-- [ ] **Build** the breadth-first deterministic fallback
-- [ ] **Verify** `pnpm forge eval --case EC-02` — **zero model calls**, `source: "deterministic"`, exit 0
+- [ ] **Build** `packages/agents/explorer` on the `Ph1.4` harness — the model chooses _what to visit next_, nothing else ([06 §4.1](docs/02-architecture/06-agent-contracts.md)) — the seam (`ExploreDeps.chooseBatch`) exists and call site 1's ceilings (`modelTurns`, `modelToolCalls` → `CALL_BUDGET`) are enforced, but the actual `runAgentLoop()`-backed implementation is unwritten; only the deterministic fallback exists today
+- [x] **Build** the breadth-first deterministic fallback
+- [ ] **Verify** `pnpm forge eval --case EC-02` — **zero model calls**, `source: "deterministic"`, exit 0 — no `EC-02` fixture exists; `packages/evals`' runner only drives full sessions through the API today, and `EC-02` is explicitly "`forge explore`, not a full session" ([16 §5](docs/04-build/16-agent-test-suite.md)). The equivalent guarantee (zero model calls, `source: "deterministic"`, every `haltReason` reachable) is asserted directly in `packages/agents/explorer/src/frontier.test.ts`.
 
 > ### ⏸ Ph2 exit gate
 >
 > `EC-02` green on both tiers with `ANTHROPIC_API_KEY` unset, and `forge explore <url>` produces a map on a real target.
+> **Not yet met.** `forge explore <url>` works and was verified against real targets (`https://example.com/`, `https://httpbin.org/`); `EC-02` cannot run without `apps/sut` and the eval-harness support noted above. See [00 §4.2](docs/00-work-plan.md) for the full list of what remains.
 > **Stop here. Ph3 begins on request.**
 
 ---

@@ -112,6 +112,9 @@ importers:
       '@forge/perception':
         specifier: workspace:*
         version: link:../../perception
+      playwright:
+        specifier: ^1.49.1
+        version: 1.63.0
 
   packages/agents/harness:
     dependencies:
@@ -154,6 +157,9 @@ importers:
 
   packages/cli:
     dependencies:
+      '@forge/agent-explorer':
+        specifier: workspace:*
+        version: link:../agents/explorer
       '@forge/core':
         specifier: workspace:*
         version: link:../core
@@ -163,6 +169,9 @@ importers:
       '@forge/orchestrator':
         specifier: workspace:*
         version: link:../orchestrator
+      playwright:
+        specifier: ^1.49.1
+        version: 1.63.0
     devDependencies:
       '@types/node':
         specifier: ^22.10.2
@@ -231,6 +240,12 @@ importers:
       '@forge/core':
         specifier: workspace:*
         version: link:../core
+      playwright:
+        specifier: ^1.49.1
+        version: 1.63.0
+      yaml:
+        specifier: ^2.9.0
+        version: 2.9.0
 
   packages/runner:
     dependencies:

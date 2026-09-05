@@ -14,7 +14,7 @@ import type {
   Scenario,
   TestPlan,
 } from "@forge/core";
-import { groundPlan } from "@forge/core";
+import { groundPlan, rank } from "@forge/core";
 import {
   COVERAGE_FLOOR,
   MAX_HEAL_ATTEMPTS_PER_LAP,
@@ -79,10 +79,14 @@ export function everyStateSigned(map: CapabilityMap): boolean {
 
 // ── TG-3 · PRIORITISING → LAPPING ──────────────────────────────────────────
 // The backlog is non-empty, and ranking is deterministic given the map. FR-902.
-// Real six-factor risk ranking is Ph2.5 (I-17); this stable sort is a Ph1 stand-in
-// strong enough to prove determinism and drive the FSM end to end.
-export function rankCapabilities(capabilities: readonly Capability[]): Capability[] {
-  return [...capabilities].sort((a, b) => b.risk.score - a.risk.score || a.id.localeCompare(b.id));
+// The six-factor risk ranking itself — cluster(), computeRiskFactors(), rank() — is
+// `packages/core/src/prioritise.ts` (Ph2.5, I-17); this is just that function wired
+// into the FSM's guard surface.
+export function rankCapabilities(
+  capabilities: readonly Capability[],
+  intent?: string,
+): Capability[] {
+  return rank(capabilities, intent);
 }
 
 export function canStartLapping(backlog: readonly Capability[]): boolean {

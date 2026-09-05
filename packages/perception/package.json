@@ -10,6 +10,8 @@
     "dev": "tsc -b --watch"
   },
   "dependencies": {
-    "@forge/core": "workspace:*"
+    "@forge/core": "workspace:*",
+    "playwright": "^1.49.1",
+    "yaml": "^2.9.0"
   }
 }
