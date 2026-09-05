@@ -2,6 +2,7 @@ import { fileURLToPath } from "node:url";
 import { dirname, join } from "node:path";
 import { runDoctor } from "./commands/doctor.js";
 import { runEval } from "./commands/eval.js";
+import { runReset } from "./commands/reset.js";
 
 export const FORGE_CLI_VERSION = "0.0.0";
 
@@ -25,7 +26,7 @@ function parseFlags(argv: string[]): Record<string, string | boolean> {
   return flags;
 }
 
-function main(): number {
+async function main(): Promise<number> {
   const [command, ...rest] = process.argv.slice(2);
   const flags = parseFlags(rest);
 
@@ -41,12 +42,21 @@ function main(): number {
         coverage: Boolean(flags.coverage),
       });
 
+    case "reset":
+      return runReset(repoRoot);
+
     default:
       console.error(
-        `forge: unknown or not-yet-implemented command '${command ?? ""}'. Available in Ph0: doctor, eval.`,
+        `forge: unknown or not-yet-implemented command '${command ?? ""}'. Available in Ph1: doctor, eval, reset.`,
       );
       return 1;
   }
 }
 
-process.exit(main());
+main().then(
+  (code) => process.exit(code),
+  (err: unknown) => {
+    console.error(err);
+    process.exit(3);
+  },
+);

@@ -3,7 +3,7 @@ import { execFileSync } from "node:child_process";
 import { join } from "node:path";
 import { loadDotenv } from "../util/dotenv.js";
 
-type Check = { name: string; ok: boolean; detail: string };
+export type Check = { name: string; ok: boolean; detail: string };
 
 function readPin(repoRoot: string): { node: string; pnpm: string } {
   const nvmrc = readFileSync(join(repoRoot, ".nvmrc"), "utf8").trim();
@@ -120,18 +120,25 @@ function checkModelReachability(env: Record<string, string>, envFileExists: bool
   };
 }
 
-export function runDoctor(repoRoot: string): number {
+/**
+ * Pure(ish) check computation, shared with `GET /api/doctor` (17 §7) so there is
+ * exactly one implementation of what "healthy" means, not one per surface.
+ */
+export function computeChecks(repoRoot: string): Check[] {
   const envPath = join(repoRoot, ".env");
   const envFileExists = existsSync(envPath);
   const env = { ...loadDotenv(envPath), ...process.env } as Record<string, string>;
 
-  const checks: Check[] = [
+  return [
     ...checkToolchain(repoRoot),
     checkChromium(),
     checkModelReachability(env, envFileExists),
     ...checkSafetyEnv(env),
   ];
+}
 
+export function runDoctor(repoRoot: string): number {
+  const checks = computeChecks(repoRoot);
   const width = Math.max(...checks.map((c) => c.name.length));
   for (const c of checks) {
     const badge = c.ok ? "OK  " : "FAIL";

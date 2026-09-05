@@ -98,53 +98,53 @@ That is a deliberate trade and it is the user's to reverse. If the demo clock wi
 
 ### Ph1.1 — Schemas and the determinism chokepoints
 
-- [ ] **Test** schema round-trip for every entity in [05 §2](docs/02-architecture/05-data-model.md); `I-13` grounding (`schema/grounding.test.ts`); the ID-prefix regexes in [05 §6](docs/02-architecture/05-data-model.md)
-- [ ] **Test** `Session.input` cannot carry `password` — a type-level assertion, not a runtime check ([05 §2.2](docs/02-architecture/05-data-model.md))
-- [ ] **Build** `packages/core/schema/*` — Zod first, types via `z.infer`, never the reverse ([15 §3.1](docs/04-build/15-repo-and-conventions.md))
-- [ ] **Build** `packages/core/src/env.ts` — `Clock`, `Rng`, `IdGen`, injected through `RunContext` ([15 §4.4](docs/04-build/15-repo-and-conventions.md))
-- [ ] **Verify** `pnpm test`, and `pnpm lint` proves `core` reaches nothing
+- [x] **Test** schema round-trip for every entity in [05 §2](docs/02-architecture/05-data-model.md); `I-13` grounding (`schema/grounding.test.ts`); the ID-prefix regexes in [05 §6](docs/02-architecture/05-data-model.md)
+- [x] **Test** `Session.input` cannot carry `password` — a type-level assertion, not a runtime check ([05 §2.2](docs/02-architecture/05-data-model.md))
+- [x] **Build** `packages/core/schema/*` — Zod first, types via `z.infer`, never the reverse ([15 §3.1](docs/04-build/15-repo-and-conventions.md))
+- [x] **Build** `packages/core/src/env.ts` — `Clock`, `Rng`, `IdGen`, injected through `RunContext` ([15 §4.4](docs/04-build/15-repo-and-conventions.md))
+- [x] **Verify** `pnpm test`, and `pnpm lint` proves `core` reaches nothing
 
 ### Ph1.2 — Store
 
-- [ ] **Test** `I-1` gapless append-only `seq` · `I-2` evidence path carries its own sha256 and a prefix hit compares the **full** hash · `I-9` traversal escapes rejected · `I-16` the password literal appears in no row, payload or file
-- [ ] **Build** `migrations/001_init.sql` exactly as [05 §4](docs/02-architecture/05-data-model.md) writes it, including the `CHECK (replan_rounds <= 2)` and both unique indexes
-- [ ] **Build** `appendEvent`, `putEvidence`, `safeWrite`, `redact`, `resolveEvidence`
-- [ ] **Verify** the four invariant tests, at the paths [05 §5](docs/02-architecture/05-data-model.md) names
+- [x] **Test** `I-1` gapless append-only `seq` · `I-2` evidence path carries its own sha256 and a prefix hit compares the **full** hash · `I-9` traversal escapes rejected · `I-16` the password literal appears in no row, payload or file
+- [x] **Build** `migrations/001_init.sql` exactly as [05 §4](docs/02-architecture/05-data-model.md) writes it, including the `CHECK (replan_rounds <= 2)` and both unique indexes
+- [x] **Build** `appendEvent`, `putEvidence`, `safeWrite`, `redact`, `resolveEvidence`
+- [x] **Verify** the four invariant tests, at the paths [05 §5](docs/02-architecture/05-data-model.md) names
 
 ### Ph1.3 — The FSM and its eleven guards
 
-- [ ] **Test** one test per `TG-n` asserting **the transition and its refusal** — the refusal column in [16 §8.2](docs/04-build/16-agent-test-suite.md) is the specification
-- [ ] **Test** `I-4` heal caps · `I-11` no `GENERATING` without an assessment · `I-12` `replanRounds ≤ 2` · `I-15` exactly one terminal status, every lap `BANKED` with one outcome
-- [ ] **Test** the exit-code mapping from [04 §3.4](docs/02-architecture/04-system-architecture.md), per the `Ph0.0` ruling
-- [ ] **Build** the session machine, the lap machine, `guards.ts`, and the lap scheduler. Persist **before** emit, always — that ordering is the whole of `FR-903` ([04 §7](docs/02-architecture/04-system-architecture.md))
-- [ ] **Verify** all eleven guard tests green; the illegal-transition test throws
+- [x] **Test** one test per `TG-n` asserting **the transition and its refusal** — the refusal column in [16 §8.2](docs/04-build/16-agent-test-suite.md) is the specification
+- [x] **Test** `I-4` heal caps · `I-11` no `GENERATING` without an assessment · `I-12` `replanRounds ≤ 2` · `I-15` exactly one terminal status, every lap `BANKED` with one outcome
+- [x] **Test** the exit-code mapping from [04 §3.4](docs/02-architecture/04-system-architecture.md), per the `Ph0.0` ruling
+- [x] **Build** the session machine, the lap machine, `guards.ts`, and the lap scheduler. Persist **before** emit, always — that ordering is the whole of `FR-903` ([04 §7](docs/02-architecture/04-system-architecture.md))
+- [x] **Verify** all eleven guard tests green; the illegal-transition test throws
 
 ### Ph1.4 — `runAgentLoop()`
 
-- [ ] **Test** each `exitReason` in [06 §2](docs/02-architecture/06-agent-contracts.md) — `EMITTED`, all three ceilings, `FORCED_CLOSE`, `SCHEMA_FAILED` after two failures, `MODEL_UNAVAILABLE`
-- [ ] **Test** the forced close produces a _partial, validated_ artefact and propagates into `haltReason`
-- [ ] **Build** the harness in `packages/agents/harness` — the only place in the repo that imports `@anthropic-ai/*`, enforced by `one-model-client`
-- [ ] **Verify** `pnpm lint` fails if a second `import Anthropic` is added anywhere
+- [x] **Test** each `exitReason` in [06 §2](docs/02-architecture/06-agent-contracts.md) — `EMITTED`, all three ceilings, `FORCED_CLOSE`, `SCHEMA_FAILED` after two failures, `MODEL_UNAVAILABLE`
+- [x] **Test** the forced close produces a _partial, validated_ artefact (`haltReason` propagation is the Ph2 Explorer's job at its call site — the harness's own contract ends at `exitReason`)
+- [x] **Build** the harness in `packages/agents/harness` — the only place in the repo that imports `@anthropic-ai/*`, enforced by `one-model-client`
+- [x] **Verify** `pnpm lint` fails if a second `import Anthropic` is added anywhere — proven directly; fixing this also required repairing `one-model-client` itself, which a pnpm-layout resolution gap had left permanently unable to fire (see commit)
 
 ### Ph1.5 — API and SSE shell
 
-- [ ] **Test** the event envelope and its ordering guarantees; the error catalogue; loopback binding ([17 §4](docs/04-build/17-api-spec.md), [§8](docs/04-build/17-api-spec.md), [§9](docs/04-build/17-api-spec.md))
-- [ ] **Test** `POST /sessions` never echoes `password`, and `TG-1` fires within 2 s with no second call (`FR-002`)
-- [ ] **Build** every endpoint group in [17 §2](docs/04-build/17-api-spec.md), returning stubbed stage output
-- [ ] **Verify** a stubbed session reaches a terminal state over the real HTTP surface
+- [x] **Test** the event envelope and its ordering guarantees; the error catalogue; loopback binding ([17 §4](docs/04-build/17-api-spec.md), [§8](docs/04-build/17-api-spec.md), [§9](docs/04-build/17-api-spec.md))
+- [x] **Test** `POST /sessions` never echoes `password`, and `TG-1` fires within 2 s with no second call (`FR-002`)
+- [x] **Build** every endpoint group in [17 §2](docs/04-build/17-api-spec.md), returning stubbed stage output
+- [x] **Verify** a stubbed session reaches a terminal state over the real HTTP surface
 
 ### Ph1.6 — The eval harness
 
-- [ ] **Test** key derivation including `callIndex` and `stateSignature` ([16 §3.4](docs/04-build/16-agent-test-suite.md)) — the `snapshot()`-twice case is the one that matters
-- [ ] **Test** `forge eval` exit codes: 0 when every case matched, including cases whose own sessions exit 1 or 2 ([16 §10.1](docs/04-build/16-agent-test-suite.md))
-- [ ] **Build** `RecordedModelClient` and `ReplayToolset` — the **two** seams, and no third ([16 §3.1](docs/04-build/16-agent-test-suite.md)); the case-file loader ([16 §6](docs/04-build/16-agent-test-suite.md)); the runner loop ([16 §7](docs/04-build/16-agent-test-suite.md)), which drives the real API
-- [ ] **Build** `forge` CLI skeleton with the commands in [15 §6](docs/04-build/15-repo-and-conventions.md) that this phase can honour
-- [ ] **Verify** `pnpm forge eval --tier replay` runs the harness end to end against a stub case
+- [x] **Test** key derivation including `callIndex` and `stateSignature` ([16 §3.4](docs/04-build/16-agent-test-suite.md)) — the `snapshot()`-twice case is the one that matters
+- [x] **Test** `forge eval` exit codes: 0 when every case matched, including cases whose own sessions exit 1 or 2 ([16 §10.1](docs/04-build/16-agent-test-suite.md))
+- [x] **Build** `RecordedModelClient` and `ReplayToolset` — the **two** seams, and no third ([16 §3.1](docs/04-build/16-agent-test-suite.md)); the case-file loader ([16 §6](docs/04-build/16-agent-test-suite.md)); the runner loop ([16 §7](docs/04-build/16-agent-test-suite.md)), which drives the real API
+- [x] **Build** `forge` CLI skeleton with the commands in [15 §6](docs/04-build/15-repo-and-conventions.md) that this phase can honour — `doctor`, `eval`, `reset`
+- [x] **Verify** `pnpm forge eval --tier replay` runs the harness end to end against a stub case (`STUB-01` — the real `EC-01`…`EC-07` suite needs Ph2–Ph6)
 
 ### Ph1.7 — Freeze
 
-- [ ] **Verify** `pnpm verify` green, `pnpm forge reset` under 20 s (`NFR-9`), a kill-and-restart mid-session resumes on the same lap (`FR-903`)
-- [ ] **Build** tag or note the schema freeze in [00 · Work Plan](docs/00-work-plan.md), same commit
+- [x] **Verify** `pnpm verify` green, `pnpm forge reset` under 20 s (`NFR-9`), a kill-and-restart mid-session resumes on the same lap (`FR-903`)
+- [x] **Build** tag or note the schema freeze in [00 · Work Plan](docs/00-work-plan.md), same commit
 
 > ### ⏸ Ph1 exit gate
 >

@@ -1,0 +1,23 @@
+{
+  "id": "STUB-01",
+  "title": "Ph1 spine — a stubbed session runs start to finish through the real FSM",
+  "seed": 20260905,
+  "target": "stub",
+
+  "given": {
+    "reset": true,
+    "session": {
+      "url": "http://localhost:4100/",
+      "budget": { "maxCapabilities": 20, "maxDurationMs": 1800000, "maxUsd": 2 }
+    }
+  },
+
+  "expect": {
+    "session": { "status": "COMPLETED", "exitCode": 0, "defectsFound": 0 },
+    "backlog": ["Checkout"],
+    "laps": [{ "capability": "Checkout", "replanRounds": 0, "outcome": "VERIFIED" }]
+  },
+
+  "liveOnly": [],
+  "requirements": []
+}

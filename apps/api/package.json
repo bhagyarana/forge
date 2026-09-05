@@ -4,17 +4,19 @@
   "private": true,
   "type": "module",
   "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
   "scripts": {
     "build": "tsc -b",
     "dev": "tsx watch src/index.ts"
   },
   "dependencies": {
-    "@fastify/sensible": "^6.0.3",
     "@forge/core": "workspace:*",
     "@forge/orchestrator": "workspace:*",
+    "@forge/store": "workspace:*",
     "fastify": "^5.2.0"
   },
   "devDependencies": {
+    "@types/node": "^22.10.2",
     "tsx": "^4.19.2"
   }
 }

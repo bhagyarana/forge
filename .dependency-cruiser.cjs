@@ -32,7 +32,11 @@ module.exports = {
       severity: "error",
       comment: "only the loop harness talks to the model — 06 §2",
       from: { pathNot: "^packages/agents/harness" },
-      to: { dependencyTypes: ["npm"], path: "^@anthropic-ai/" },
+      // `to.path` matches the RESOLVED path, which under pnpm's virtual store is
+      // `node_modules/.pnpm/@anthropic-ai+sdk@<version>/node_modules/@anthropic-ai/sdk/...`,
+      // not a plain `node_modules/@anthropic-ai/...` prefix — so this is intentionally
+      // unanchored rather than `^@anthropic-ai/`.
+      to: { dependencyTypes: ["npm"], path: "node_modules/@anthropic-ai/" },
     },
 
     {
@@ -68,6 +72,14 @@ module.exports = {
     tsPreCompilationDeps: true,
     tsConfig: { fileName: "tsconfig.base.json" },
     enhancedResolveOptions: { extensions: [".ts", ".tsx", ".js", ".json"] },
-    exclude: { path: "node_modules|dist|\\.next" },
+    // `exclude` fully prunes matching modules FROM THE GRAPH, including edges that
+    // point at them — excluding `node_modules` here silently dropped every edge to
+    // an npm package, which made `one-model-client` (and any future npm-path rule)
+    // unable to ever fire, since its resolved target always lives under
+    // `node_modules`. `doNotFollow` keeps the edge (so a forbidden rule can still
+    // match it) but stops recursion into the package's own internals, which is the
+    // actual "don't cruise into node_modules" behaviour this config wants.
+    exclude: { path: "dist|\\.next" },
+    doNotFollow: { path: "node_modules" },
   },
 };

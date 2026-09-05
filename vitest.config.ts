@@ -5,9 +5,11 @@ export default defineConfig({
     environment: "node",
     include: [
       "packages/*/src/**/*.test.ts",
+      "packages/*/schema/**/*.test.ts",
       "packages/*/test/contract/**/*.test.ts",
       "packages/agents/*/src/**/*.test.ts",
       "packages/agents/*/test/contract/**/*.test.ts",
+      "apps/*/src/**/*.test.ts",
     ],
     exclude: ["**/node_modules/**", "**/dist/**", "**/.next/**"],
     testTimeout: 5000,

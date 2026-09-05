@@ -1,5 +1,5 @@
-import { existsSync, readdirSync } from "node:fs";
 import { join } from "node:path";
+import { listCaseIds, runCases } from "@forge/evals";
 
 export type EvalOptions = {
   tier: "replay" | "live";
@@ -9,32 +9,47 @@ export type EvalOptions = {
 };
 
 /**
- * Ph0 stub of the golden-case harness (16 · Agent Test Suite).
- * `fixtures/golden/**` is empty until Ph1.6 builds real cases, so the run is
- * vacuously green — every one of zero cases matched its expected verdict.
- * The real orchestrator-driven harness replaces this in Ph1.6.
+ * The golden-case harness (16 · Agent Test Suite). Drives each case through the real
+ * orchestrator, via the real API, in-process (packages/evals/src/runner.ts). Exits 0
+ * when every case's verdict matched its expectation — including a case whose own
+ * session correctly exits 1 or 2 (15 §10.1). Only a harness error is a CI failure.
  */
-export function runEval(repoRoot: string, options: EvalOptions): number {
-  const goldenDir = join(repoRoot, "fixtures", "golden");
-  const caseFiles = existsSync(goldenDir)
-    ? readdirSync(goldenDir).filter((f: string) => f.endsWith(".json"))
-    : [];
+export async function runEval(repoRoot: string, options: EvalOptions): Promise<number> {
+  const fixturesRoot = join(repoRoot, "fixtures");
+  const caseIds = options.caseId ? [options.caseId] : listCaseIds(fixturesRoot);
 
-  const selected = options.caseId
-    ? caseFiles.filter((f: string) => f === `${options.caseId}.json`)
-    : caseFiles;
-
-  if (options.caseId && selected.length === 0) {
-    console.error(`forge eval: no such case '${options.caseId}' in ${goldenDir}`);
+  if (options.caseId && caseIds.length === 0) {
+    console.error(`forge eval: no such case '${options.caseId}' in ${fixturesRoot}/golden`);
     return 3;
   }
 
   console.log(
-    `FORGE EVAL · ${selected.length} case(s) · ${options.tier} · repeat ${options.repeat}`,
+    `FORGE EVAL · ${caseIds.length} case(s) · ${options.tier} · repeat ${options.repeat}`,
   );
-  for (const file of selected) {
-    console.log(`  ${file}  (not yet implemented — Ph1.6)`);
+
+  let allPassed = true;
+  let passedCount = 0;
+  for (let round = 0; round < options.repeat; round++) {
+    let results;
+    try {
+      results = await runCases(fixturesRoot, caseIds, options.tier);
+    } catch (err) {
+      console.error(`forge eval: harness error — ${(err as Error).message}`);
+      return 3;
+    }
+    passedCount = results.filter((r) => r.passed).length;
+    for (const result of results) {
+      const badge = result.passed ? "✓" : "✗";
+      console.log(
+        `  ${result.caseId}  ${result.verdict.session.status}  ${badge}  (${result.durationMs.toFixed(0)}ms)`,
+      );
+      if (!result.passed) {
+        allPassed = false;
+        for (const mismatch of result.mismatches) console.log(`      ${mismatch}`);
+      }
+    }
   }
-  console.log(`\n${selected.length}/${selected.length} · exit 0`);
-  return 0;
+
+  console.log(`\n${passedCount}/${caseIds.length} · exit ${allPassed ? 0 : 1}`);
+  return allPassed ? 0 : 1;
 }
