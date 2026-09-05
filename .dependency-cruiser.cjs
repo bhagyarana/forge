@@ -32,7 +32,14 @@ module.exports = {
       severity: "error",
       comment: "only the loop harness talks to the model — 06 §2",
       from: { pathNot: "^packages/agents/harness" },
-      to: { dependencyTypes: ["npm"], path: "^@anthropic-ai/" },
+      // NOT `^@anthropic-ai/` — matched against `resolved`, and pnpm
+      // resolves every npm import through a symlink into its store, e.g.
+      // `.../node_modules/.pnpm/@anthropic-ai+sdk@.../node_modules/@anthropic-ai/sdk/…`.
+      // A `^`-anchored pattern never matches that, so the rule reports zero
+      // violations forever — passing not because the import graph is
+      // clean, but because the rule stopped looking. Anchor on a preceding
+      // "/" instead of the string start.
+      to: { dependencyTypes: ["npm"], path: "(^|/)@anthropic-ai/" },
     },
 
     {
@@ -68,6 +75,15 @@ module.exports = {
     tsPreCompilationDeps: true,
     tsConfig: { fileName: "tsconfig.base.json" },
     enhancedResolveOptions: { extensions: [".ts", ".tsx", ".js", ".json"] },
-    exclude: { path: "node_modules|dist|\\.next" },
+    // `doNotFollow`, not `exclude`, for node_modules: `exclude` deletes a
+    // matched module from the graph — no edge to it is ever created, so a
+    // `forbidden` rule can never see it. Every npm package's resolved path
+    // contains "node_modules", so `exclude: "node_modules"` made
+    // `one-model-client` (and any other npm-facing rule) permanently inert
+    // with zero violations reported, which is worse than no rule at all.
+    // `doNotFollow` stops recursion into a package's own dependencies
+    // without deleting the edge that reaches it.
+    doNotFollow: { path: "node_modules" },
+    exclude: { path: "dist|\\.next" },
   },
 };
